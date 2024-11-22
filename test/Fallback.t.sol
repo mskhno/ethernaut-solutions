@@ -38,6 +38,9 @@ contract TestFallback is BaseTest {
         /**
          * CODE YOUR EXPLOIT HERE
          */
+
+        // The goal is basically to steal ownership of Fallback
+
         vm.startPrank(player);
 
         // Contribute some amount
