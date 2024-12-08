@@ -21,7 +21,7 @@
 - [x] Recovery
 - [x] Magic Number
 - [not there] Alien Codex
-- [ ] Denial
+- [x] Denial
 - [ ] Shop  
 - [ ] Dex
 - [ ] Dex Two
