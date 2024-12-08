@@ -22,7 +22,7 @@
 - [x] Magic Number
 - [not there] Alien Codex
 - [x] Denial
-- [ ] Shop  
+- [x] Shop  
 - [ ] Dex
 - [ ] Dex Two
 - [ ] Puzzle Wallet
