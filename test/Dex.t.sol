@@ -54,9 +54,11 @@ contract TestDex is BaseTest {
 
         vm.startPrank(player, player);
 
+        // Approve the DEX to spend the tokens for max typ uint256 for efficiency
+        level.approve(address(level), type(uint256).max);
+
         // Initial swap to desync token balances
         uint256 firstSwap = token1.balanceOf(player);
-        level.approve(address(level), firstSwap);
         level.swap(level.token1(), level.token2(), firstSwap);
 
         // Swap back and forth until one of the tokens runs out
@@ -65,13 +67,11 @@ contract TestDex is BaseTest {
                 // Get amount of token2 to swap
                 uint256 amountIn = getAmountIn(token2, token1);
 
-                level.approve(address(level), amountIn);
                 level.swap(level.token2(), level.token1(), amountIn);
             } else if (token2.balanceOf(player) == 0) {
                 // Get amount of token1 to swap
                 uint256 amountIn = getAmountIn(token1, token2);
 
-                level.approve(address(level), amountIn);
                 level.swap(level.token1(), level.token2(), amountIn);
             }
         }

@@ -1,7 +1,8 @@
 ## ALL LEVELS
 
 - [x] Fallback 
-- [x] Fallout - [x] CoinFlip
+- [x] Fallout 
+- [x] CoinFlip
 - [x] Telephone
 - [x] Token
 - [x] Delegation
@@ -13,9 +14,6 @@
 - [x] Privacy
 - [x] Gatekeeper One
 - [x] Gatekeeper Two SOLUITONS DELETED UP TO THIS
-
-
-тут я удалила:
 - [x] Naught Coin
 - [x] Preservation
 - [x] Recovery
