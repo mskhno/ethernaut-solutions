@@ -22,7 +22,7 @@
 - [x] Denial
 - [x] Shop  
 - [x] Dex
-- [ ] Dex Two
+- [x] Dex Two
 - [ ] Puzzle Wallet
 - [not there] Motorbike
 - [ ] Double Entry Point
