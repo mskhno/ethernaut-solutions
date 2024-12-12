@@ -23,7 +23,7 @@
 - [x] Shop  
 - [x] Dex
 - [x] Dex Two
-- [ ] Puzzle Wallet
+- [x] Puzzle Wallet
 - [not there] Motorbike
 - [ ] Double Entry Point
 - [not there] Good Samaritan
