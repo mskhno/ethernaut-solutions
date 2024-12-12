@@ -41,30 +41,20 @@ contract TestPuzzleWallet is BaseTest {
          * CODE YOUR EXPLOIT HERE
          */
 
-        // FINDING: the storage layout of the proxy contract is not compliant with eip1967
-        // Implementation logic address is stored at the slot, which is complient with eip1967 and is unlikely to be written to
-        // But pendingAdmin and admin are simply stored at slots 0 and 1
-        // This results in storage collision between proxy and implementation contracts, since it's the proxy that represents pairs context.
-        // In other words: implementation contract executes its logic in proxy's context
-        // Whereas selector clashes are not the problem of this setup, the storage collision is
+        // The requierements for this level are definetly much more complex than the previous ones
+        // Here we have understand how proxies work and have some knowledge storage design patterns these systems may have.
+        // This setup uses an unstructured storage pattern, so aquaitance with it and EIP-1967 is needed.
 
-        // So the goal appears to be this: find a way to change the slot 1 of proxy contract to the player address
-        // Slot 1 address admin collides with uint256 maxBalance, so it is possible to overwrite admin with player address
+        // The goal here is to become the admin of the proxy
+        // Having the knowledge mentioned abovce we can immediately see that there is a storage collision
+        // The variables admin and pendingAdmin are not compliant with the EIP-1967 standard
+        // They are at risk of being overwritten by the implementation contract
 
-        // So the more clear goal is this: call the function on PuzzleWallet which will change the second storage slot, changing the admin to player address
-        // Those function can be: init(), setMaxBalance() - but both of these require an address to whitelisted
-        // So how do i get whitelisted?
-
-        // The only way to get whitelisted appears to be to call addToWhitelist() function, but its onlyOwner
-        // Can i steal ownership?
-
-        // Owner is set in init() function, but it requires maxBalance to be 0
-        // Also, owner variable collides with pendingAdmin variable on the proxy contract
-        // This means I would need to delegatecall proxy from the implementation contract
+        // We have to use this and knowlegde about delegatecalls to exploit this level
 
         vm.startPrank(player, player);
 
-        // Lets set pendingAdmii(slot 0) to be player address
+        // Lets set pendingAdmin(slot 0) to be player address
         level.proposeNewAdmin(player);
 
         // Now calling this function will whitelist the player, because this function reads from slot 0, and the context is provided by proxy contract
@@ -99,7 +89,7 @@ contract TestPuzzleWallet is BaseTest {
         puzzleWallet.multicall{value: 0.001 ether}(calls);
         console.log(puzzleWallet.balances(player));
 
-        // Now we can drain the whole wallet
+        // Drain the wallet
         puzzleWallet.execute(player, 0.002 ether, new bytes(0));
         console.log(address(puzzleWallet).balance);
 
