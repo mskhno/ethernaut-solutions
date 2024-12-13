@@ -25,7 +25,7 @@
 - [x] Dex Two
 - [x] Puzzle Wallet
 - [not there] Motorbike
-- [ ] Double Entry Point
+- [x] Double Entry Point
 - [not there] Good Samaritan
 - [not there] Gatekeeper Three
 - [not there] Switch
